@@ -38,15 +38,15 @@ public class PreguntasConnect extends SQLiteOpenHelper {
 	}
 	
 	
-	public void addPregunta(String encuestado, Integer id_encuesta, Integer id_respuesta, String valor_respuesta) {
+	public void addPregunta(Pregunta pregunta) {
 		
 		SQLiteDatabase db = this.getWritableDatabase();
 		
 		ContentValues values = new ContentValues();
-		values.put(ENCUESTADO, encuestado);
-		values.put(ID_ENCUESTA, id_encuesta);
-		values.put(ID_RESPUESTA, id_respuesta);
-		values.put(RESPUESTA, valor_respuesta);
+		values.put(ENCUESTADO, pregunta.getEncuestado());
+		values.put(ID_ENCUESTA, pregunta.getIdEncuesta());
+		values.put(ID_RESPUESTA, pregunta.getIdRespuesta());
+		values.put(RESPUESTA, pregunta.getValorRespuesta());
 		db.insert(TABLE, null, values);
 		db.close();
 	}

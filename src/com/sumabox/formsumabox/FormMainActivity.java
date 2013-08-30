@@ -6,7 +6,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import org.json.JSONArray;
@@ -256,6 +255,33 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				}
 			}
 			
+			LinearLayout.LayoutParams usuariosInputParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,
+					LinearLayout.LayoutParams.WRAP_CONTENT);
+			usuariosInputParam.setMargins(50, 10, 50, 0);
+			
+			TextView nombreLabel = new TextView(this);
+			nombreLabel.setTextSize(22);
+			nombreLabel.setText("Nombre encuestado");
+			EditText nombre = new EditText(this);
+			nombre.setTag("nombre");
+			nombre.setHint("Ingrese su nombre aqui");
+			nombre.setLayoutParams(usuariosInputParam);
+			nombreLabel.setLayoutParams(usuariosInputParam);
+			
+			TextView emailLabel = new TextView(this);
+			emailLabel.setTextSize(22);
+			emailLabel.setText("Email encuestado");
+			EditText email = new EditText(this);
+			email.setTag("email");
+			email.setHint("Ingrese su email");
+			email.setLayoutParams(usuariosInputParam);
+			emailLabel.setLayoutParams(usuariosInputParam);
+			
+			relativeLayout.addView(nombreLabel);
+			relativeLayout.addView(nombre);
+			relativeLayout.addView(emailLabel);
+			relativeLayout.addView(email);
+			
 			/*
 			 * Boton Guardar
 			 */
@@ -386,24 +412,41 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		//System.out.println("STOP");
 	}
 	
+	public boolean validateEmail(String email) {
+		
+		boolean validEmail = true;
+		if(!email.toString().matches("[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+")) {
+			validEmail = false;
+		}
+		return validEmail;
+	}
+	
 	@Override
 	public void onClick(View view) {
 		
 		JSONObject jPost = new JSONObject();
-		JSONArray jArray = new JSONArray();
+		JSONArray preguntasArray = new JSONArray();
+		JSONArray encuestadoArray = new JSONArray();
 		
 		Boolean error = false;
 		
-		String encuestado = UUID.randomUUID().toString();
+		int encuestado;
 		
+		ArrayList<EditText> userTextList = new ArrayList<EditText>();
 		ArrayList<EditText> editTextList = new ArrayList<EditText>();
 		ArrayList<RadioGroup> radioGroupList = new ArrayList<RadioGroup>();
+		
 		relativeLayout = (LinearLayout) findViewById(1001);
-				
+		
 		for(int i = 0; i < relativeLayout.getChildCount(); i++) {
 			
 			if(relativeLayout.getChildAt(i) instanceof EditText) {
-				editTextList.add((EditText) relativeLayout.getChildAt(i) );
+				EditText texto = (EditText) relativeLayout.getChildAt(i);
+				if(texto.getTag() == null) {
+					editTextList.add(texto);
+				} else {
+					userTextList.add(texto);
+				}
 			}
 			
 			if(relativeLayout.getChildAt(i) instanceof RadioGroup) {
@@ -411,12 +454,31 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			}
 		}
 		
+		// Recorremos primero los datos del usuario.
+		for (int u = 0; u < userTextList.size(); u++) {
+			EditText texto = (EditText) userTextList.get(u);
+			
+			if(texto.getText().toString().length() == 0) {
+				if(texto.getTag().equals("nombre")) {
+					error = true;
+					texto.setError("Debe ingresar su nombre");
+				}
+				if(texto.getTag().equals("email")) {
+					error = true;
+					texto.setError("Debe ingresar su email");
+				}
+			} else if(texto.getTag().equals("email") && !validateEmail(texto.getText().toString())){
+				error = true;
+				texto.setError("Debe ingresar un email valido");
+			}
+		}
+		
+		
 		//Recorremos el arrayList para buscar errores.
 		for(int e = 0; e < editTextList.size(); e++) {
+			
 			EditText texto = (EditText) findViewById(editTextList.get(e).getId());
-			
-			String respuesta = (String) texto.getText().toString();
-			
+			String respuesta = texto.getText().toString();
 			if(respuesta.length() == 0) {
 				error = true;
 				texto.setError("Debe ingresar su respuesta aqui");
@@ -449,13 +511,27 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		//No hay errores asi que se continua
 		if(!error) {
 			dbConnect = new PreguntasConnect(this);
+			Encuestado encuestadoObj = new Encuestado();
+			
+			for (int u = 0; u < userTextList.size(); u++) {
+				EditText texto = (EditText) userTextList.get(u);
+				if(texto.getTag().equals("email")) {
+					encuestadoObj.setMail(texto.getText().toString());
+				}
+				if(texto.getTag().equals("nombre")) {
+					encuestadoObj.setNombre(texto.getText().toString());
+				}
+				texto.setText("");
+			}
+			
+			encuestado = (int) dbConnect.addEncuestado(encuestadoObj);
 			
 			for (int i = 0; i < editTextList.size(); i++) {
 				
 				EditText texto = (EditText) findViewById(editTextList.get(i).getId());
 				String respuesta = (String) texto.getText().toString();
 				
-				dbConnect.addPregunta(encuestado, id_encuesta, texto.getId(), respuesta);
+				dbConnect.addPregunta(new Pregunta(encuestado, id_encuesta, texto.getId(), respuesta));
 				
 				JSONObject reqObj = new JSONObject();
 				
@@ -464,8 +540,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					reqObj.put("id_encuesta", id_encuesta);
 					reqObj.put("id_respuesta", texto.getId());
 					reqObj.put("valor_respuesta", respuesta);
-					jArray.put(reqObj);
-					jPost.put("preguntas", jArray);
+					preguntasArray.put(reqObj);
+					jPost.put("preguntas", preguntasArray);
 					
 				} catch (JSONException e1) {
 					e1.printStackTrace();
@@ -482,7 +558,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					
 					if(radioButton.isChecked()) {
 						
-						dbConnect.addPregunta(encuestado, id_encuesta, radioButtonGroup.getId(), String.valueOf(ra));
+						dbConnect.addPregunta(new Pregunta(encuestado, id_encuesta, radioButtonGroup.getId(), String.valueOf(ra)));
 						
 						JSONObject reqObj = new JSONObject();
 						
@@ -491,8 +567,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 							reqObj.put("id_encuesta", id_encuesta);
 							reqObj.put("id_respuesta", radioButtonGroup.getId());
 							reqObj.put("valor_respuesta", String.valueOf(ra));
-							jArray.put(reqObj);
-							jPost.put("preguntas", jArray);
+							preguntasArray.put(reqObj);
+							jPost.put("preguntas", preguntasArray);
 							
 						} catch (JSONException e2) {
 							e2.printStackTrace();
@@ -501,8 +577,17 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					}
 				}
 			}
+			
+			JSONObject reqObj = new JSONObject();
+			try {
+				reqObj.put("nombre", encuestadoObj.getNombre());
+				reqObj.put("email", encuestadoObj.getMail());
+				encuestadoArray.put(reqObj);
+				jPost.put("encuestado", encuestadoArray);
+			} catch (JSONException e2) {
+				e2.printStackTrace();
+			}
 		}
-		
 		
 		ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -520,6 +605,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			mToast.show();
 		}
 	}
+	
 	/*
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
