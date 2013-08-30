@@ -37,7 +37,5 @@ public class Encuestado {
 	public void setId(int _id) {
 		this._id = _id;
 	}
-	
-	
 
 }

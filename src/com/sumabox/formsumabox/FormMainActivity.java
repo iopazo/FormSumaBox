@@ -49,7 +49,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	static ImageView imageView;
 	private static Integer total, id_encuesta;
 	static JSONArray opciones;
-	DatabaseConnect dbConnect = null;
+	PreguntasConnect dbConnect = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -448,14 +448,14 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		
 		//No hay errores asi que se continua
 		if(!error) {
-			dbConnect = new DatabaseConnect(this);
+			dbConnect = new PreguntasConnect(this);
 			
 			for (int i = 0; i < editTextList.size(); i++) {
 				
 				EditText texto = (EditText) findViewById(editTextList.get(i).getId());
 				String respuesta = (String) texto.getText().toString();
 				
-				dbConnect.insert(encuestado, id_encuesta, texto.getId(), respuesta);
+				dbConnect.addPregunta(encuestado, id_encuesta, texto.getId(), respuesta);
 				
 				JSONObject reqObj = new JSONObject();
 				
@@ -481,7 +481,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					RadioButton radioButton = (RadioButton)radioButtonGroup.getChildAt(ra);
 					
 					if(radioButton.isChecked()) {
-						dbConnect.insert(encuestado, id_encuesta, radioButtonGroup.getId(), String.valueOf(ra));
+						
+						dbConnect.addPregunta(encuestado, id_encuesta, radioButtonGroup.getId(), String.valueOf(ra));
 						
 						JSONObject reqObj = new JSONObject();
 						
