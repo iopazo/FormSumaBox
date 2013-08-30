@@ -82,6 +82,7 @@ public class JSONParser {
 
 		Boolean exito = false;
 		HttpClient httpClient = new DefaultHttpClient();
+		InputStream is = null;
 		
 		try {
 			HttpPost post = new HttpPost(url);
@@ -92,6 +93,7 @@ public class JSONParser {
 			
 			if(response != null) {
 				InputStream is = response.getEntity().getContent();
+				is = response.getEntity().getContent();
 				exito = true;
 			}
 			
