@@ -92,11 +92,9 @@ public class JSONParser {
 			HttpResponse response = httpClient.execute(post);
 			
 			if(response != null) {
-				InputStream is = response.getEntity().getContent();
 				is = response.getEntity().getContent();
 				exito = true;
 			}
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
