@@ -3,9 +3,11 @@ package com.sumabox.formsumabox;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.json.JSONArray;
@@ -15,6 +17,8 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -22,9 +26,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -41,26 +49,32 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	private TextView[] labels;
 	private EditText[] editText;
 	private RadioButton[] radioButton;
-	private static LinearLayout relativeLayout;
-	static String url = "http://moveapps.cl/json_android.php";
+	static SharedPreferences prefs;
+	static String url;
 	static String id_pregunta, label, before_label, after_label, tipo, orientation, url_logo_encuesta;
 	static Boolean escala;
 	static ImageView imageView;
 	private static Integer total, id_encuesta;
 	static JSONArray opciones;
-	PreguntasConnect dbConnect = null;
+	DatabaseConnect dbConnect = null;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
 		super.onCreate(savedInstanceState);
+		prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		url = prefs.getString("example_text", "http://");
 		
 		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		
-		if(wifi.isConnected()) {
+		if(wifi.isConnected() && URLUtil.isValidUrl(url)) {
 			loadActivity();
-		} else {
+		} else if(!wifi.isConnected()){
 			dialog("Debe estar conectado a Wifi para cargar el formulario.");
+		} else {
+			Intent intent = new Intent(this, SettingsActivity.class);
+			startActivity(intent);
 		}
 		
 	}
@@ -92,6 +106,16 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		}
 	}
 	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		if(wifi.isConnected()) {
+			sinchronizeData();
+		}
+	}
+	
 	private void dialog(String message) {
 		
 		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
@@ -115,7 +139,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	}
 	
 	private void loadActivity() {
-
+		
 		try {
 			//Aca se conecta con el objeto json...
 			JSONObjectTask task = new JSONObjectTask();
@@ -124,7 +148,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			JSONObject jsonData = task.execute(url).get();
 			
 			ScrollView scrollView;
-			LinearLayout relativeLayout;
+			LinearLayout linearLayout;
 			
 			//Variables para el manejo de distancias entre objetos
 			int row; // Indica el objeto que creamos
@@ -142,8 +166,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			editText = new EditText[numeroPreguntas];  
 			
 			scrollView = new ScrollView(this);
-			relativeLayout = new LinearLayout(this);
-			relativeLayout.setId(1001);
+			linearLayout = new LinearLayout(this);
+			linearLayout.setId(1001);
 			
 			//Logo de la aplicacion
 			if(!url_logo_encuesta.equals("")) {
@@ -156,7 +180,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				GetPngImageTask imageTask = new GetPngImageTask();
 				imageTask.execute(url_logo_encuesta);
 				
-				relativeLayout.addView(imageView);
+				linearLayout.addView(imageView);
 			}
 			
 			for(row = 0; row < numeroPreguntas; row++) {
@@ -191,7 +215,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					labelParams.setMargins(50, 10, 50, 0);
 					labels[row].setTextSize(22);
 					labels[row].setLayoutParams(labelParams);
-					relativeLayout.addView(labels[row]);
+					linearLayout.addView(labels[row]);
 					
 					LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
 					inputParams.setMargins(50, 20, 50, 0);
@@ -199,7 +223,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					editText[row].setHint("Inserte su respuesta aqui...");
 					editText[row].setId(id);
 					editText[row].setLayoutParams(inputParams);
-					relativeLayout.addView(editText[row]);
+					linearLayout.addView(editText[row]);
 					
 				} else {
 					
@@ -210,7 +234,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					labelRadioParams.setMargins(50, 10, 50, 0);
 					labels[row].setTextSize(22);
 					labels[row].setLayoutParams(labelRadioParams);
-					relativeLayout.addView(labels[row]);
+					linearLayout.addView(labels[row]);
 					
 					LinearLayout.LayoutParams leftLabelRadioParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 					
@@ -222,7 +246,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 						labels[row].setTextColor(Color.GRAY);
 						leftLabelRadioParams.setMargins(50, 15, 50, 0);
 						labels[row].setLayoutParams(leftLabelRadioParams);
-						relativeLayout.addView(labels[row]);
+						linearLayout.addView(labels[row]);
 					}
 					
 					LinearLayout.LayoutParams radioGParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -236,7 +260,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					
 					radioGroup.setLayoutParams(radioGParams);
 					radioGroup.setId(id);
-					relativeLayout.addView(radioGroup);
+					linearLayout.addView(radioGroup);
 					
 					if(escala) {
 						for (int r = 0; r < total; r++) {
@@ -261,7 +285,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			TextView nombreLabel = new TextView(this);
 			nombreLabel.setTextSize(22);
-			nombreLabel.setText("Nombre encuestado");
+			nombreLabel.setText(getResources().getString(R.string.encuestado_label));
 			EditText nombre = new EditText(this);
 			nombre.setTag("nombre");
 			nombre.setHint("Ingrese su nombre aqui");
@@ -270,17 +294,17 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			TextView emailLabel = new TextView(this);
 			emailLabel.setTextSize(22);
-			emailLabel.setText("Email encuestado");
+			emailLabel.setText(getResources().getString(R.string.mail_label));
 			EditText email = new EditText(this);
 			email.setTag("email");
 			email.setHint("Ingrese su email");
 			email.setLayoutParams(usuariosInputParam);
 			emailLabel.setLayoutParams(usuariosInputParam);
 			
-			relativeLayout.addView(nombreLabel);
-			relativeLayout.addView(nombre);
-			relativeLayout.addView(emailLabel);
-			relativeLayout.addView(email);
+			linearLayout.addView(nombreLabel);
+			linearLayout.addView(nombre);
+			linearLayout.addView(emailLabel);
+			linearLayout.addView(email);
 			
 			/*
 			 * Boton Guardar
@@ -292,11 +316,11 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			buttonParams.setMargins(50, 40, 50, 0);
 			button.setLayoutParams(buttonParams);
 			button.setOnClickListener(this);
-			relativeLayout.addView(button);
+			linearLayout.addView(button);
 			
-			//Params para el layout Relative
-			relativeLayout.setOrientation(LinearLayout.VERTICAL);
-			scrollView.addView(relativeLayout);
+			//Params para el layout Linear
+			linearLayout.setOrientation(LinearLayout.VERTICAL);
+			scrollView.addView(linearLayout);
 			
 			//Params para el scroll View.
 			LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
@@ -406,12 +430,6 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		}
 	}
 	
-	@Override
-	protected void onStop() {
-		super.onStop();
-		//System.out.println("STOP");
-	}
-	
 	public boolean validateEmail(String email) {
 		
 		boolean validEmail = true;
@@ -421,27 +439,76 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		return validEmail;
 	}
 	
-	@Override
-	public void onClick(View view) {
+	private void sinchronizeData() {
+		
+		dbConnect = new DatabaseConnect(this);
 		
 		JSONObject jPost = new JSONObject();
 		JSONArray preguntasArray = new JSONArray();
 		JSONArray encuestadoArray = new JSONArray();
+		List<Encuestado> contactosArray = dbConnect.getEncuestados();
 		
+		if(contactosArray.size() > 0) {
+			for (int i = 0; i < contactosArray.size(); i++) {
+				Encuestado encuestado = contactosArray.get(i);
+				
+				JSONObject encuestadoObj = new JSONObject();
+				
+				try {
+					encuestadoObj.put("nombre", encuestado.getNombre());
+					encuestadoObj.put("email", encuestado.getMail());
+					encuestadoArray.put(encuestadoObj);
+					jPost.put("encuestado", encuestadoArray);
+				} catch (JSONException e2) {
+					e2.printStackTrace();
+				}
+				
+				if(encuestado.getPreguntas().size() > 0) {
+					for (int j = 0; j < encuestado.getPreguntas().size(); j++) {
+						Pregunta pregunta = encuestado.getPreguntas().get(j);
+						
+						JSONObject preguntaObject = new JSONObject();
+						try {
+							preguntaObject.put("encuestado", pregunta.getEncuestado());
+							preguntaObject.put("id_encuesta", pregunta.getIdEncuesta());
+							preguntaObject.put("id_respuesta", pregunta.getIdRespuesta());
+							preguntaObject.put("valor_respuesta", pregunta.getValorRespuesta());
+							preguntasArray.put(preguntaObject);
+							jPost.put("preguntas", preguntasArray);
+							
+						} catch (JSONException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+				JsonPostObjectTask task = new JsonPostObjectTask();
+				task.execute(jPost);
+				dbConnect.updateEncuestado(encuestado.getId());
+			}
+		}
+	}
+	
+	@Override
+	public void onClick(View view) {
+			
+		ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		
+		JSONObject jPost = new JSONObject();
+		JSONArray preguntasArray = new JSONArray();
+		JSONArray encuestadoArray = new JSONArray();
 		Boolean error = false;
-		
 		int encuestado;
-		
 		ArrayList<EditText> userTextList = new ArrayList<EditText>();
 		ArrayList<EditText> editTextList = new ArrayList<EditText>();
 		ArrayList<RadioGroup> radioGroupList = new ArrayList<RadioGroup>();
 		
-		relativeLayout = (LinearLayout) findViewById(1001);
+		LinearLayout linearLayout = (LinearLayout) findViewById(1001);
 		
-		for(int i = 0; i < relativeLayout.getChildCount(); i++) {
+		for(int i = 0; i < linearLayout.getChildCount(); i++) {
 			
-			if(relativeLayout.getChildAt(i) instanceof EditText) {
-				EditText texto = (EditText) relativeLayout.getChildAt(i);
+			if(linearLayout.getChildAt(i) instanceof EditText) {
+				EditText texto = (EditText) linearLayout.getChildAt(i);
 				if(texto.getTag() == null) {
 					editTextList.add(texto);
 				} else {
@@ -449,8 +516,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				}
 			}
 			
-			if(relativeLayout.getChildAt(i) instanceof RadioGroup) {
-				radioGroupList.add((RadioGroup) relativeLayout.getChildAt(i));
+			if(linearLayout.getChildAt(i) instanceof RadioGroup) {
+				radioGroupList.add((RadioGroup) linearLayout.getChildAt(i));
 			}
 		}
 		
@@ -510,7 +577,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		
 		//No hay errores asi que se continua
 		if(!error) {
-			dbConnect = new PreguntasConnect(this);
+			dbConnect = new DatabaseConnect(this);
 			Encuestado encuestadoObj = new Encuestado();
 			
 			for (int u = 0; u < userTextList.size(); u++) {
@@ -520,6 +587,11 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				}
 				if(texto.getTag().equals("nombre")) {
 					encuestadoObj.setNombre(texto.getText().toString());
+				}
+				if(wifi.isConnected()) {
+					encuestadoObj.setAsync(1);
+				} else {
+					encuestadoObj.setAsync(0);
 				}
 				texto.setText("");
 			}
@@ -589,9 +661,6 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			}
 		}
 		
-		ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-		
 		if(wifi.isConnected() && !error) {
 			JsonPostObjectTask task = new JsonPostObjectTask();
 			task.execute(jPost);
@@ -606,12 +675,28 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		}
 	}
 	
-	/*
+	public void configApp() {
+		Intent intent = new Intent(this, SettingsActivity.class);
+		startActivity(intent);
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.form_main, menu);
 		return true;
 	}
-	*/
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		
+	    switch (item.getItemId()) {
+	    case R.id.item1:
+	    	configApp();
+	        return true;
+
+	    default:
+	        return super.onOptionsItemSelected(item);
+	    }
+	}
 }

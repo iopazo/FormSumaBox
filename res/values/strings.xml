@@ -4,5 +4,7 @@
     <string name="app_name">Formulario</string>
     <string name="action_settings">Configuracion</string>
     <string name="hello_world">Hello world!</string>
+    <string name="encuestado_label">Nombre:</string>
+    <string name="mail_label">Email encuestado:</string>
 
 </resources>
