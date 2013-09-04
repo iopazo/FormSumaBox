@@ -67,6 +67,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		url = prefs.getString("example_text", "");
 		sucursal = prefs.getString("id_sucursal", "");
 		
+		System.out.println("Sucursal: " + sucursal);
+		
 		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		
@@ -658,7 +660,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				reqObj.put("nombre", encuestadoObj.getNombre());
 				reqObj.put("email", encuestadoObj.getMail());
 				reqObj.put("id_encuesta", encuestadoObj.getIdEncuesta());
-				reqObj.put("sucursal", encuestadoObj.getIdEncuesta());
+				reqObj.put("sucursal", encuestadoObj.getSucursal());
 				//reqObj.put("fecha", encuestadoObj.getFecha());
 				encuestadoArray.put(reqObj);
 				jPost.put("encuestado", encuestadoArray);
