@@ -51,6 +51,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	private RadioButton[] radioButton;
 	static SharedPreferences prefs;
 	static String url;
+	static String sucursal;
 	static String id_pregunta, label, before_label, after_label, tipo, orientation, url_logo_encuesta;
 	static Boolean escala;
 	static ImageView imageView;
@@ -63,7 +64,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		
 		super.onCreate(savedInstanceState);
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		url = prefs.getString("example_text", "http://");
+		url = prefs.getString("example_text", "");
+		sucursal = prefs.getString("id_sucursal", "");
 		
 		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -98,11 +100,11 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		
 		if(wifi.isConnected()) {
 			LinearLayout rl = (LinearLayout) findViewById(1001);
-			if(rl != null) {
+			if(rl == null) {
 				loadActivity();
-			} else {
-				dialog("Debe estar conectado a Wifi para cargar el formulario.");
 			}
+		} else {
+			dialog("Debe estar conectado a Wifi para cargar el formulario.");
 		}
 	}
 	
@@ -588,14 +590,15 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				if(texto.getTag().equals("nombre")) {
 					encuestadoObj.setNombre(texto.getText().toString());
 				}
-				if(wifi.isConnected()) {
-					encuestadoObj.setAsync(1);
-				} else {
-					encuestadoObj.setAsync(0);
-				}
 				texto.setText("");
 			}
-			
+			if(wifi.isConnected()) {
+				encuestadoObj.setAsync(1);
+			} else {
+				encuestadoObj.setAsync(0);
+			}
+			encuestadoObj.setIdEncuesta(id_encuesta);
+			encuestadoObj.setSucursal(sucursal);
 			encuestado = (int) dbConnect.addEncuestado(encuestadoObj);
 			
 			for (int i = 0; i < editTextList.size(); i++) {
@@ -654,6 +657,9 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			try {
 				reqObj.put("nombre", encuestadoObj.getNombre());
 				reqObj.put("email", encuestadoObj.getMail());
+				reqObj.put("id_encuesta", encuestadoObj.getIdEncuesta());
+				reqObj.put("sucursal", encuestadoObj.getIdEncuesta());
+				//reqObj.put("fecha", encuestadoObj.getFecha());
 				encuestadoArray.put(reqObj);
 				jPost.put("encuestado", encuestadoArray);
 			} catch (JSONException e2) {
@@ -675,6 +681,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		}
 	}
 	
+	//Menu
 	public void configApp() {
 		Intent intent = new Intent(this, SettingsActivity.class);
 		startActivity(intent);

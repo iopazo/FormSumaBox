@@ -17,6 +17,16 @@
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="@string/pref_title_display_name" />
+    
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="@string/pref_default_sucursal"
+        android:inputType="textCapWords"
+        android:key="id_sucursal"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_title_sucursal" />
 
     <!--
          NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to

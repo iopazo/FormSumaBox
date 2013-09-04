@@ -24,6 +24,9 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 	private String MAIL = "email";
 	private String NOMBRE = "nombre";
 	private String ASYNC = "async";
+	private String FECHA = "fecha";
+	private String SUCURSAL = "sucursal";
+	
 	
 	DatabaseConnect(Context context) {
 		super(context, DATABASE, null, DATABASE_VERSION);
@@ -38,6 +41,8 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		values.put(MAIL, encuestado.getMail());
 		values.put(NOMBRE, encuestado.getNombre());
 		values.put(ASYNC, encuestado.getAsync());
+		values.put(ID_ENCUESTA, encuestado.getIdEncuesta());
+		values.put(SUCURSAL, encuestado.getSucursal());
 		
 		lastInsertId = db.insert(TABLE_ENCUESTADO, null, values);
 		db.close();
@@ -77,14 +82,16 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		List<Encuestado> encuestadosArray = new ArrayList<Encuestado>();
 		List<Pregunta> preguntas = new ArrayList<Pregunta>();
 		SQLiteDatabase db = this.getReadableDatabase();
-		String query = "SELECT id," + NOMBRE + ", " + MAIL + " FROM " + TABLE_ENCUESTADO + " WHERE " + ASYNC + " = 0";
+		String query = "SELECT id," + NOMBRE + ", " + MAIL + ", " + ID_ENCUESTA + ", " + FECHA + ", " + SUCURSAL + " "
+				+ "FROM " + TABLE_ENCUESTADO + " WHERE " + ASYNC + " = 0";
 		Cursor cursor = db.rawQuery(query, null);
 		
 		if(cursor != null) {
 			if(cursor.moveToFirst()) {
 				do {
 					preguntas = getPreguntasByEncuestado(cursor.getInt(0));
-					encuestadosArray.add(new Encuestado(cursor.getInt(0), cursor.getString(1), cursor.getString(2), preguntas));
+					encuestadosArray.add(new Encuestado(cursor.getInt(0), cursor.getString(1), 
+							cursor.getString(2), preguntas, cursor.getInt(3), cursor.getString(4), cursor.getString(5)));
 				} while (cursor.moveToNext());
 			}
 		}
@@ -119,7 +126,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		db.execSQL("CREATE TABLE " + TABLE + " (id INTEGER PRIMARY KEY AUTOINCREMENT, encuestado INTEGER (10), "
 				+ "id_encuesta INTEGER, id_respuesta INTEGER, valor_respuesta TEXT)");
 		db.execSQL("CREATE TABLE " + TABLE_ENCUESTADO + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre VARCHAR(200),"
-				+ " email VARCHAR(200), async TINYINT(1) DEFAULT 0)");
+				+ " email VARCHAR(200), async TINYINT(1) DEFAULT 0, id_encuesta INTEGER, fecha DATETIME DEFAULT CURRENT_TIMESTAMP, sucursal INTEGER)");
 	}
 
 	@Override

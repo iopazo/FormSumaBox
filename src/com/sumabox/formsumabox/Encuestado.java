@@ -7,8 +7,11 @@ public class Encuestado {
 	String _mail;
 	String _nombre;
 	int _id;
+	int _id_encuesta;
 	int _async;
+	String _fecha;
 	List<Pregunta> _preguntas;
+	String _sucursal;
 	
 	public Encuestado() {
 	}
@@ -18,11 +21,14 @@ public class Encuestado {
 		this._nombre = nombre;
 	}
 	
-	public Encuestado(int id, String nombre, String mail, List<Pregunta> preguntas) {
+	public Encuestado(int id, String nombre, String mail, List<Pregunta> preguntas, int id_encuesta, String fecha, String sucursal) {
 		this._id = id;
 		this._mail = mail;
 		this._nombre = nombre;
 		this._preguntas = preguntas;
+		this._id_encuesta = id_encuesta;
+		this._fecha = fecha;
+		this._sucursal = sucursal;
 	}
 
 	public String getMail() {
@@ -64,7 +70,30 @@ public class Encuestado {
 	public void setAsync(int _async) {
 		this._async = _async;
 	}
-	
-	
 
+	public int getIdEncuesta() {
+		return _id_encuesta;
+	}
+
+	public void setIdEncuesta(int _id_encuesta) {
+		this._id_encuesta = _id_encuesta;
+	}
+
+	public String getFecha() {
+		return _fecha;
+	}
+
+	public void setFecha(String _fecha) {
+		this._fecha = _fecha;
+	}
+
+	public String getSucursal() {
+		return _sucursal;
+	}
+
+	public void setSucursal(String _sucursal) {
+		this._sucursal = _sucursal;
+	}
+	
+	
 }
