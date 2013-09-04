@@ -461,6 +461,9 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				try {
 					encuestadoObj.put("nombre", encuestado.getNombre());
 					encuestadoObj.put("email", encuestado.getMail());
+					encuestadoObj.put("id_encuesta", encuestado.getIdEncuesta());
+					encuestadoObj.put("sucursal", encuestado.getSucursal());
+					encuestadoObj.put("fecha", encuestado.getFecha());
 					encuestadoArray.put(encuestadoObj);
 					jPost.put("encuestado", encuestadoArray);
 				} catch (JSONException e2) {
