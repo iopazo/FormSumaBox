@@ -60,7 +60,6 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		db.close();
 	}
 	
-	
 	public void addPregunta(Pregunta pregunta) {
 		
 		SQLiteDatabase db = this.getWritableDatabase();
