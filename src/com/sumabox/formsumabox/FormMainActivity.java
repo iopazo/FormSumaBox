@@ -67,8 +67,6 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		url = prefs.getString("example_text", "");
 		sucursal = prefs.getString("id_sucursal", "");
 		
-		System.out.println("Sucursal: " + sucursal);
-		
 		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		

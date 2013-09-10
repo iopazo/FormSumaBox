@@ -14,8 +14,10 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 	private static final String DATABASE = "db_suma";
 	private static final int DATABASE_VERSION = 1;
 	// TABLAS
-	static final String TABLE = "encuestas";
 	static final String TABLE_ENCUESTADO = "encuestado";
+	static final String TABLE = "respuestas";
+	static final String TABLE_ENCUESTAS = "encuestas";
+	static final String TBL_PPREGUNTAS_ENCUESTAS = "preguntas";
 	// COLUMNAS
 	private static String ENCUESTADO = "encuestado";
 	private static String ID_ENCUESTA = "id_encuesta";
@@ -126,12 +128,21 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 				+ "id_encuesta INTEGER, id_respuesta INTEGER, valor_respuesta TEXT)");
 		db.execSQL("CREATE TABLE " + TABLE_ENCUESTADO + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre VARCHAR(200),"
 				+ " email VARCHAR(200), async TINYINT(1) DEFAULT 0, id_encuesta INTEGER, fecha DATETIME DEFAULT CURRENT_TIMESTAMP, sucursal INTEGER)");
+		
+		db.execSQL("CREATE TABLE " + TABLE_ENCUESTAS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, logo_url VARCHAR(200),"
+				+ " sucursal INTEGER, id_encuesta INTEGER)");
+		
+		db.execSQL("CREATE TABLE " + TBL_PPREGUNTAS_ENCUESTAS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, id_pregunta INTEGER,"
+				+ " total INTEGER, zero TINYINT(1) DEFAULT 0, escala TINYINT(1) DEFAULT 0, tipo VARCHAR(20), orientation VARCHAR(20), label VARCHAR(200),"
+				+ "before_label VARCHAR(200), after_label VARCHAR(200)");
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		db.execSQL("DROP TABLE IF EXISTS " + TABLE);
 		db.execSQL("DROP TABLE IF EXISTS " + TABLE_ENCUESTADO);
+		db.execSQL("DROP TABLE IF EXISTS " + TABLE_ENCUESTAS);
+		db.execSQL("DROP TABLE IF EXISTS " + TBL_PPREGUNTAS_ENCUESTAS);
 		onCreate(db);
 	}
 }
