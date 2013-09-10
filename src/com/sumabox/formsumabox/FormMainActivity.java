@@ -61,24 +61,11 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		
 		super.onCreate(savedInstanceState);
+		
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		url = prefs.getString("example_text", "");
 		sucursal = prefs.getString("id_sucursal", "");
-		
-		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-		
-		if(wifi.isConnected() && URLUtil.isValidUrl(url)) {
-			loadActivity();
-		} else if(!wifi.isConnected()){
-			dialog("Debe estar conectado a Wifi para cargar el formulario.");
-		} else {
-			Intent intent = new Intent(this, SettingsActivity.class);
-			startActivity(intent);
-		}
-		
 	}
 	
 	@Override
@@ -94,17 +81,20 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
+
 		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		
-		if(wifi.isConnected()) {
-			LinearLayout rl = (LinearLayout) findViewById(1001);
-			if(rl == null) {
+		if(wifi.isConnected() && URLUtil.isValidUrl(url)) {
+			LinearLayout ll = (LinearLayout) findViewById(1001);
+			if(ll == null) {
 				loadActivity();
 			}
-		} else {
+		} else if(!wifi.isConnected()){
 			dialog("Debe estar conectado a Wifi para cargar el formulario.");
+		} else {
+			Intent intent = new Intent(this, SettingsActivity.class);
+			startActivity(intent);
 		}
 	}
 	
@@ -148,6 +138,11 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			//Obtenemos el objeto json desde la tarea asincrona
 			JSONObject jsonData = task.execute(url).get();
+			
+			dbConnect = new DatabaseConnect(this);
+			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData);
+			
+			System.out.println(encuestaObj.getLogoUrl());
 			
 			ScrollView scrollView;
 			LinearLayout linearLayout;

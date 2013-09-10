@@ -7,7 +7,7 @@
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
     <string name="pref_title_display_name">Url Encuesta</string>
-    <string name="pref_default_display_name">http://</string>
+    <string name="pref_default_display_name">URL ENCUESTA/</string>
     <string name="pref_title_sucursal">Id Sucursal</string>
     <string name="pref_default_sucursal">0</string>
 

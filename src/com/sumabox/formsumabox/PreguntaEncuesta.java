@@ -6,6 +6,7 @@ public class PreguntaEncuesta {
 
 	int _id_pregunta;
 	int _total;
+	int _id_encuesta;
 	boolean _zero;
 	boolean _escala;
 	String _tipo;
@@ -21,7 +22,7 @@ public class PreguntaEncuesta {
 	}
 	
 	public PreguntaEncuesta(int id_pregunta, String tipo, boolean escala, String orientation, 
-			int total, boolean zero, String label, String before_label, String after_label, List<String> options) {
+			int total, boolean zero, String label, String before_label, String after_label) {
 		
 		this._id_pregunta = id_pregunta;
 		this._tipo = tipo;
@@ -32,7 +33,7 @@ public class PreguntaEncuesta {
 		this._label = label;
 		this._before_label = before_label;
 		this._after_label = after_label;
-		this._options = options;
+		//this._options = options;
 		
 	}
 
@@ -136,6 +137,14 @@ public class PreguntaEncuesta {
 		this._options = _options;
 	}
 	
+	public int get_id_encuesta() {
+		return _id_encuesta;
+	}
+
+
+	public void set_id_encuesta(int _id_encuesta) {
+		this._id_encuesta = _id_encuesta;
+	}
 	
 
 }

@@ -3,6 +3,10 @@ package com.sumabox.formsumabox;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -32,6 +36,131 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 	
 	DatabaseConnect(Context context) {
 		super(context, DATABASE, null, DATABASE_VERSION);
+	}
+	
+	public Encuesta saveEncuesta(JSONObject jsonObject) throws JSONException {
+		
+		Encuesta enc = new Encuesta();
+		
+		SQLiteDatabase queryDB = this.getReadableDatabase();
+		String query = "SELECT * FROM " + TABLE_ENCUESTAS;
+		Cursor cursor = queryDB.rawQuery(query, null);
+		
+		if(cursor != null) {
+			
+			if(cursor.getCount() == 0) {
+				
+				System.out.println("Sigue guardando");
+				List<PreguntaEncuesta> preguntasList = new ArrayList<PreguntaEncuesta>();
+				
+				JSONObject encuesta = jsonObject.getJSONObject("encuesta");
+				
+				enc.setId(encuesta.getInt("id"));
+				enc.setLogoUrl(encuesta.getString("logo_url"));
+				enc.setSucursal(encuesta.getString("sucursal"));
+				
+				ContentValues values = new ContentValues();
+				values.put("id_encuesta", enc.getId());
+				values.put("logo_url", enc.getLogoUrl());
+				values.put("sucursal", enc.getSucursal());
+				SQLiteDatabase db = this.getWritableDatabase();
+				long insertId = db.insert(TABLE_ENCUESTAS, null, values);
+				
+				JSONArray preguntas = encuesta.getJSONArray("preguntas");
+				int numeroPreguntas = preguntas.length();
+				
+				for (int i = 0; i < numeroPreguntas; i++) {
+					
+					PreguntaEncuesta prEncuesta = new PreguntaEncuesta();
+					JSONObject pr = preguntas.getJSONObject(i);
+					
+					prEncuesta.set_id_encuesta((int)insertId);
+					prEncuesta.set_id_pregunta(pr.getInt("id_pregunta"));
+					prEncuesta.set_tipo(pr.getString("tipo"));
+					
+					if(prEncuesta.get_tipo().equals("radio")) {
+						
+						prEncuesta.set_escala(pr.getBoolean("escala"));
+						prEncuesta.set_orientation(pr.getString("orientation"));
+						
+						if(prEncuesta.is_escala()) {
+							prEncuesta.set_before_label(pr.getString("before_label"));
+							prEncuesta.set_before_label(pr.getString("after_label"));
+							prEncuesta.set_total(pr.getInt("total"));
+						} else {
+							
+							JSONArray opciones = pr.getJSONArray("options");
+							List<String> options = new ArrayList<String>();
+							for (int j = 0; j < opciones.length(); j++) {
+								JSONObject textJson = opciones.getJSONObject(j);
+								options.add(textJson.getString("texto"));
+							}
+							prEncuesta.set_options(options);
+						}
+					}
+					prEncuesta.set_label(pr.getString("label"));
+					savePreguntas(prEncuesta);
+					
+					preguntasList.add(prEncuesta);
+				}
+				
+				enc.setPreguntas(preguntasList);
+				
+				db.close();
+			} else {
+				if(cursor.moveToFirst()) {
+					do {
+						enc.setLogoUrl(cursor.getString(1));
+						enc.setSucursal(cursor.getString(2));
+						enc.setId(cursor.getInt(3));
+						enc.setPreguntas(getPreguntasEncuestasByEncuesta(cursor.getInt(0)));
+					} while (cursor.moveToNext());
+				}
+				queryDB.close();
+			}
+		}
+		return enc;
+	}
+	
+	public List<PreguntaEncuesta> getPreguntasEncuestasByEncuesta(int idEncuesta) {
+		
+		List<PreguntaEncuesta> preguntasArray = new ArrayList<PreguntaEncuesta>();
+		SQLiteDatabase db = this.getReadableDatabase();
+		String query = "SELECT * FROM " + TBL_PPREGUNTAS_ENCUESTAS + " WHERE id_encuesta = " + idEncuesta;
+		Cursor cursor = db.rawQuery(query, null);
+		
+		if(cursor != null) {
+			if(cursor.moveToFirst()) {
+				do {
+					boolean escala = cursor.getInt(5) == 1 ? true : false;
+					boolean zero = cursor.getInt(4) == 1 ? true : false;
+					
+					preguntasArray.add(new PreguntaEncuesta(cursor.getInt(1), cursor.getString(6), escala, 
+							cursor.getString(7), cursor.getInt(3), zero, cursor.getString(8), cursor.getString(9), cursor.getString(10)));
+				} while (cursor.moveToNext());
+			}
+		}
+		db.close();
+		return preguntasArray;
+	}
+	
+	public void savePreguntas(PreguntaEncuesta preguntaEncuesta) {
+		
+		SQLiteDatabase db = this.getWritableDatabase();
+		
+		ContentValues values = new ContentValues();
+		values.put("id_pregunta", preguntaEncuesta.get_id_pregunta());
+		values.put("total", preguntaEncuesta.get_total());
+		values.put("zero", preguntaEncuesta.is_zero());
+		values.put("escala", preguntaEncuesta.is_escala());
+		values.put("tipo", preguntaEncuesta.get_tipo());
+		values.put("orientation", preguntaEncuesta.get_orientation());
+		values.put("label", preguntaEncuesta.get_label());
+		values.put("before_label", preguntaEncuesta.get_before_label());
+		values.put("after_label", preguntaEncuesta.get_after_label());
+		
+		db.insert(TBL_PPREGUNTAS_ENCUESTAS, null, values);
+		db.close();
 	}
 	
 	public long addEncuestado(Encuestado encuestado) {
@@ -130,11 +259,10 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 				+ " email VARCHAR(200), async TINYINT(1) DEFAULT 0, id_encuesta INTEGER, fecha DATETIME DEFAULT CURRENT_TIMESTAMP, sucursal INTEGER)");
 		
 		db.execSQL("CREATE TABLE " + TABLE_ENCUESTAS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, logo_url VARCHAR(200),"
-				+ " sucursal INTEGER, id_encuesta INTEGER)");
-		
-		db.execSQL("CREATE TABLE " + TBL_PPREGUNTAS_ENCUESTAS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, id_pregunta INTEGER,"
+				+ " sucursal VARCHAR(20), id_encuesta INTEGER)");
+		db.execSQL("CREATE TABLE " + TBL_PPREGUNTAS_ENCUESTAS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, id_pregunta INTEGER, id_encuesta INTEGER, "
 				+ " total INTEGER, zero TINYINT(1) DEFAULT 0, escala TINYINT(1) DEFAULT 0, tipo VARCHAR(20), orientation VARCHAR(20), label VARCHAR(200),"
-				+ "before_label VARCHAR(200), after_label VARCHAR(200)");
+				+ "before_label VARCHAR(200), after_label VARCHAR(200))");
 	}
 
 	@Override
