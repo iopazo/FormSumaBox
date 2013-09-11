@@ -3,10 +3,11 @@ package com.sumabox.formsumabox;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -14,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -27,6 +29,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,6 +47,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+@SuppressLint("SimpleDateFormat")
 public class FormMainActivity extends Activity implements OnClickListener {
 	
 	private TextView[] labels;
@@ -56,7 +60,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	static Boolean escala;
 	static ImageView imageView;
 	private static Integer total, id_encuesta;
-	static JSONArray opciones;
+	static String[] opciones;
 	DatabaseConnect dbConnect = null;
 	
 	@Override
@@ -84,17 +88,26 @@ public class FormMainActivity extends Activity implements OnClickListener {
 
 		ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		NetworkInfo mobile = conManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 		
-		if(wifi.isConnected() && URLUtil.isValidUrl(url)) {
-			LinearLayout ll = (LinearLayout) findViewById(1001);
+		dbConnect = new DatabaseConnect(this);
+		LinearLayout ll = (LinearLayout) findViewById(1001);
+		
+		if(dbConnect.havingEncuesta()) {
 			if(ll == null) {
 				loadActivity();
 			}
-		} else if(!wifi.isConnected()){
-			dialog("Debe estar conectado a Wifi para cargar el formulario.");
 		} else {
-			Intent intent = new Intent(this, SettingsActivity.class);
-			startActivity(intent);
+			if(wifi.isConnected() || mobile.isConnected() && URLUtil.isValidUrl(url)) {
+				if(ll == null) {
+					loadActivity();
+				}
+			} else if(!wifi.isConnected() && !mobile.isConnected()){
+				dialog("Debe estar conectado a Wifi para cargar el formulario.");
+			} else {
+				Intent intent = new Intent(this, SettingsActivity.class);
+				startActivity(intent);
+			}
 		}
 	}
 	
@@ -103,7 +116,9 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		super.onStop();
 		ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-		if(wifi.isConnected()) {
+		NetworkInfo mobile = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+		
+		if(wifi.isConnected() || mobile.isConnected()) {
 			sinchronizeData();
 		}
 	}
@@ -116,8 +131,9 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				
 				ConnectivityManager conManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 				NetworkInfo wifi = conManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+				NetworkInfo mobile = conManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 				
-				if(wifi.isConnected()) {
+				if(wifi.isConnected() || mobile.isConnected()) {
 					loadActivity();
 				} else {
 					dialog("Debe estar conectado a Wifi para cargar el formulario.");
@@ -137,12 +153,13 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			JSONObjectTask task = new JSONObjectTask();
 			
 			//Obtenemos el objeto json desde la tarea asincrona
-			JSONObject jsonData = task.execute(url).get();
-			
+			JSONObject jsonData = null;
 			dbConnect = new DatabaseConnect(this);
-			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData);
 			
-			System.out.println(encuestaObj.getLogoUrl());
+			if(!dbConnect.havingEncuesta()) {
+				jsonData = task.execute(url).get();
+			}
+			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData);
 			
 			ScrollView scrollView;
 			LinearLayout linearLayout;
@@ -151,13 +168,14 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			int row; // Indica el objeto que creamos
 			int numeroPreguntas; // Escala para los radio button
 			
-			JSONObject encuesta = jsonData.getJSONObject("encuesta");
-			id_encuesta = encuesta.getInt("id");
-			url_logo_encuesta = encuesta.getString("logo_url");
+			//JSONObject encuesta = jsonData.getJSONObject("encuesta");
+			id_encuesta = encuestaObj.getId();
+			url_logo_encuesta = encuestaObj.getLogoUrl();
 			
-			JSONArray preguntas = encuesta.getJSONArray("preguntas");
+			//JSONArray preguntas = encuesta.getJSONArray("preguntas");
+			List<PreguntaEncuesta> preguntas = encuestaObj.getPreguntas();
 			
-			numeroPreguntas = preguntas.length();
+			numeroPreguntas = preguntas.size();
 			
 			labels = new TextView[numeroPreguntas];  
 			editText = new EditText[numeroPreguntas];  
@@ -182,26 +200,27 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			for(row = 0; row < numeroPreguntas; row++) {
 				
-				JSONObject c = preguntas.getJSONObject(row);
+				PreguntaEncuesta c = preguntas.get(row);
+				//JSONObject c = preguntas.getJSONObject(row);
 				
-				Integer id = c.getInt("id_pregunta");
-				tipo = c.getString("tipo");
+				Integer id = c.get_id_pregunta();
+				tipo = c.get_tipo();
 				
-				if(tipo.toString().equals("radio")) {
-					escala = c.getBoolean("escala");
-					orientation = c.getString("orientation");
+				if(tipo.equals("radio")) {
+					escala = c.is_escala();
+					orientation = c.get_orientation();
 					if(escala) {
-						before_label = c.getString("before_label");
-						after_label = c.getString("after_label");
-						total = c.getInt("total");
+						before_label = c.get_before_label();
+						after_label = c.get_after_label();
+						total = c.get_total();
 						radioButton = new RadioButton[total];
 					} else {
-						opciones = c.getJSONArray("options");
-						radioButton = new RadioButton[opciones.length()];
+						opciones = TextUtils.split(c.get_options(), ",");
+						radioButton = new RadioButton[opciones.length];
 					}
 				}
 				
-				label = c.getString("label");
+				label = c.get_label();
 				
 				if(!tipo.equals("radio")) {
 					
@@ -266,10 +285,9 @@ public class FormMainActivity extends Activity implements OnClickListener {
 							radioGroup.addView(radioButton[r]);
 						}
 					} else {
-						for (int r = 0; r < opciones.length() ; r++) {
-							JSONObject option = opciones.getJSONObject(r);
+						for (int r = 0; r < opciones.length ; r++) {
 							radioButton[r] = new RadioButton(this);
-							radioButton[r].setText(option.getString("texto"));
+							radioButton[r].setText(opciones[r]);
 							radioGroup.addView(radioButton[r]);
 						}
 					}
@@ -493,6 +511,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 		ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		NetworkInfo mobile = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 		
 		JSONObject jPost = new JSONObject();
 		JSONArray preguntasArray = new JSONArray();
@@ -657,7 +676,9 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				reqObj.put("email", encuestadoObj.getMail());
 				reqObj.put("id_encuesta", encuestadoObj.getIdEncuesta());
 				reqObj.put("sucursal", encuestadoObj.getSucursal());
-				//reqObj.put("fecha", encuestadoObj.getFecha());
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+				Date date = new Date();
+				reqObj.put("fecha", dateFormat.format(date));
 				encuestadoArray.put(reqObj);
 				jPost.put("encuestado", encuestadoArray);
 			} catch (JSONException e2) {
@@ -665,14 +686,14 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			}
 		}
 		
-		if(wifi.isConnected() && !error) {
+		if(wifi.isConnected() || mobile.isConnected() && !error) {
 			JsonPostObjectTask task = new JsonPostObjectTask();
 			task.execute(jPost);
 			
 			Toast mToast = Toast.makeText(this, "Formulario guardado correctamente.", Toast.LENGTH_SHORT);
 			mToast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,0, 0);
 			mToast.show();
-		} else if(!wifi.isConnected()){
+		} else if(!wifi.isConnected() && !mobile.isConnected()){
 			Toast mToast = Toast.makeText(this, "Sin conexion wifi", Toast.LENGTH_SHORT);
 			mToast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,0, 0);
 			mToast.show();

@@ -2,6 +2,7 @@ package com.sumabox.formsumabox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,6 +13,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 
 public class DatabaseConnect extends SQLiteOpenHelper {
 		
@@ -38,6 +40,18 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		super(context, DATABASE, null, DATABASE_VERSION);
 	}
 	
+	public boolean havingEncuesta() {
+		SQLiteDatabase queryDB = this.getReadableDatabase();
+		String query = "SELECT * FROM " + TABLE_ENCUESTAS;
+		Cursor cursor = queryDB.rawQuery(query, null);
+		
+		if(cursor == null || !cursor.moveToFirst()) {
+			return false;
+		}
+		queryDB.close();
+		return true;
+	}
+	
 	public Encuesta saveEncuesta(JSONObject jsonObject) throws JSONException {
 		
 		Encuesta enc = new Encuesta();
@@ -50,7 +64,6 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 			
 			if(cursor.getCount() == 0) {
 				
-				System.out.println("Sigue guardando");
 				List<PreguntaEncuesta> preguntasList = new ArrayList<PreguntaEncuesta>();
 				
 				JSONObject encuesta = jsonObject.getJSONObject("encuesta");
@@ -85,7 +98,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 						
 						if(prEncuesta.is_escala()) {
 							prEncuesta.set_before_label(pr.getString("before_label"));
-							prEncuesta.set_before_label(pr.getString("after_label"));
+							prEncuesta.set_after_label(pr.getString("after_label"));
 							prEncuesta.set_total(pr.getInt("total"));
 						} else {
 							
@@ -95,7 +108,8 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 								JSONObject textJson = opciones.getJSONObject(j);
 								options.add(textJson.getString("texto"));
 							}
-							prEncuesta.set_options(options);
+							String unidos = TextUtils.join(",", options);
+							prEncuesta.set_options(unidos);
 						}
 					}
 					prEncuesta.set_label(pr.getString("label"));
@@ -136,7 +150,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 					boolean zero = cursor.getInt(4) == 1 ? true : false;
 					
 					preguntasArray.add(new PreguntaEncuesta(cursor.getInt(1), cursor.getString(6), escala, 
-							cursor.getString(7), cursor.getInt(3), zero, cursor.getString(8), cursor.getString(9), cursor.getString(10)));
+							cursor.getString(7), cursor.getInt(3), zero, cursor.getString(8), cursor.getString(9), cursor.getString(10), cursor.getString(11)));
 				} while (cursor.moveToNext());
 			}
 		}
@@ -158,6 +172,8 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		values.put("label", preguntaEncuesta.get_label());
 		values.put("before_label", preguntaEncuesta.get_before_label());
 		values.put("after_label", preguntaEncuesta.get_after_label());
+		values.put("id_encuesta", preguntaEncuesta.get_id_encuesta());
+		values.put("options", preguntaEncuesta.get_options());
 		
 		db.insert(TBL_PPREGUNTAS_ENCUESTAS, null, values);
 		db.close();
@@ -262,7 +278,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 				+ " sucursal VARCHAR(20), id_encuesta INTEGER)");
 		db.execSQL("CREATE TABLE " + TBL_PPREGUNTAS_ENCUESTAS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, id_pregunta INTEGER, id_encuesta INTEGER, "
 				+ " total INTEGER, zero TINYINT(1) DEFAULT 0, escala TINYINT(1) DEFAULT 0, tipo VARCHAR(20), orientation VARCHAR(20), label VARCHAR(200),"
-				+ "before_label VARCHAR(200), after_label VARCHAR(200))");
+				+ "before_label VARCHAR(200), after_label VARCHAR(200), options TEXT)");
 	}
 
 	@Override
