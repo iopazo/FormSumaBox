@@ -2,7 +2,6 @@ package com.sumabox.formsumabox;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,6 +12,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 public class DatabaseConnect extends SQLiteOpenHelper {
@@ -46,13 +46,27 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		Cursor cursor = queryDB.rawQuery(query, null);
 		
 		if(cursor == null || !cursor.moveToFirst()) {
+			queryDB.close();
 			return false;
 		}
 		queryDB.close();
 		return true;
 	}
 	
-	public Encuesta saveEncuesta(JSONObject jsonObject) throws JSONException {
+	public void truncateTable(String table) {
+		
+		SQLiteDatabase deleteQuery = this.getWritableDatabase();
+		String query = "DELETE FROM " + table;
+		deleteQuery.rawQuery(query, null);
+		deleteQuery.close();
+	}
+	
+	public Encuesta saveEncuesta(JSONObject jsonObject, boolean sync) throws JSONException{
+		
+		if(sync) {
+			truncateTable(TABLE_ENCUESTAS);
+			truncateTable(TBL_PPREGUNTAS_ENCUESTAS);
+		}
 		
 		Encuesta enc = new Encuesta();
 		
@@ -100,6 +114,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 							prEncuesta.set_before_label(pr.getString("before_label"));
 							prEncuesta.set_after_label(pr.getString("after_label"));
 							prEncuesta.set_total(pr.getInt("total"));
+							prEncuesta.set_zero(pr.getBoolean("zero"));
 						} else {
 							
 							JSONArray opciones = pr.getJSONArray("options");

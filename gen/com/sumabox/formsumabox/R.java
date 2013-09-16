@@ -61,8 +61,8 @@ public final class R {
          */
         public static final int pref_header_notifications=0x7f06000e;
         public static final int pref_ringtone_silent=0x7f060011;
+        public static final int pref_sync=0x7f06000f;
         public static final int pref_title_display_name=0x7f060007;
-        public static final int pref_title_new_message_notifications=0x7f06000f;
         public static final int pref_title_ringtone=0x7f060010;
         public static final int pref_title_sucursal=0x7f060009;
         public static final int pref_title_sync_frequency=0x7f06000c;

@@ -57,7 +57,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 	static String url;
 	static String sucursal;
 	static String id_pregunta, label, before_label, after_label, tipo, orientation, url_logo_encuesta;
-	static Boolean escala;
+	static Boolean escala, zero, sync;
 	static ImageView imageView;
 	private static Integer total, id_encuesta;
 	static String[] opciones;
@@ -70,6 +70,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		url = prefs.getString("example_text", "");
 		sucursal = prefs.getString("id_sucursal", "");
+		sync = prefs.getBoolean("sync", false);
 	}
 	
 	@Override
@@ -159,7 +160,15 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			if(!dbConnect.havingEncuesta()) {
 				jsonData = task.execute(url).get();
 			}
-			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData);
+			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData, sync);
+			
+			if(sync) {
+				 SharedPreferences settings = 
+				        PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+				    SharedPreferences.Editor editor = settings.edit();
+				    editor.putBoolean("sync", false);
+				    editor.commit();
+			}
 			
 			ScrollView scrollView;
 			LinearLayout linearLayout;
@@ -214,6 +223,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 						after_label = c.get_after_label();
 						total = c.get_total();
 						radioButton = new RadioButton[total];
+						zero = c.is_zero();
 					} else {
 						opciones = TextUtils.split(c.get_options(), ",");
 						radioButton = new RadioButton[opciones.length];
@@ -279,7 +289,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					linearLayout.addView(radioGroup);
 					
 					if(escala) {
-						for (int r = 0; r < total; r++) {
+						for (int r = ((!zero) ? 0 : 1); r < total; r++) {
 							radioButton[r] = new RadioButton(this);
 							radioButton[r].setText("" + r);
 							radioGroup.addView(radioButton[r]);
