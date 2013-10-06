@@ -234,7 +234,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				
 				if(!tipo.equals("radio")) {
 					
-					LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+					LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 					
 					labels[row] = new TextView(this);
 					labels[row].setText(label);
@@ -243,7 +243,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					labels[row].setLayoutParams(labelParams);
 					linearLayout.addView(labels[row]);
 					
-					LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+					LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 					inputParams.setMargins(50, 20, 50, 0);
 					editText[row] = new EditText(this);
 					editText[row].setHint("Inserte su respuesta aqui...");
@@ -253,7 +253,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					
 				} else {
 					
-					LinearLayout.LayoutParams labelRadioParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+					LinearLayout.LayoutParams labelRadioParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 					
 					labels[row] = new TextView(this);
 					labels[row].setText(label);
@@ -304,7 +304,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				}
 			}
 			
-			LinearLayout.LayoutParams usuariosInputParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT,
+			LinearLayout.LayoutParams usuariosInputParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
 					LinearLayout.LayoutParams.WRAP_CONTENT);
 			usuariosInputParam.setMargins(50, 10, 50, 0);
 			
