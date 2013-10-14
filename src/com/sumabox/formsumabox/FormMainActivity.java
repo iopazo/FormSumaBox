@@ -30,6 +30,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -94,12 +95,13 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		dbConnect = new DatabaseConnect(this);
 		LinearLayout ll = (LinearLayout) findViewById(1001);
 		
-		if(dbConnect.havingEncuesta()) {
+		if(dbConnect.havingEncuesta(sync)) {
 			if(ll == null) {
 				loadActivity();
 			}
 		} else {
-			if(wifi.isConnected() || mobile.isConnected() && URLUtil.isValidUrl(url)) {
+			
+			if((wifi.isConnected() || mobile.isConnected()) && URLUtil.isValidUrl(url)) {
 				if(ll == null) {
 					loadActivity();
 				}
@@ -119,7 +121,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		NetworkInfo mobile = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
 		
-		if(wifi.isConnected() || mobile.isConnected()) {
+		if(wifi.isConnected() || (mobile != null && mobile.isConnected())) {
 			sinchronizeData();
 		}
 	}
@@ -157,10 +159,16 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			JSONObject jsonData = null;
 			dbConnect = new DatabaseConnect(this);
 			
-			if(!dbConnect.havingEncuesta()) {
+			if(!dbConnect.havingEncuesta(sync)) {
 				jsonData = task.execute(url).get();
+				
+				if(jsonData == null){
+					Intent intent = new Intent(this, SettingsActivity.class);
+					startActivity(intent);
+				}
 			}
-			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData, sync);
+			
+			Encuesta encuestaObj = dbConnect.saveEncuesta(jsonData);
 			
 			if(sync) {
 				 SharedPreferences settings = 
@@ -264,7 +272,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					
 					LinearLayout.LayoutParams leftLabelRadioParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 					
-					if(escala) {
+					if(escala && !before_label.equals("") && !after_label.equals("")) {
 						//Before Label
 						labels[row] = new TextView(this);
 						labels[row].setText("Debe seleccionar entre " + before_label + " y " + after_label + ".");
@@ -359,6 +367,8 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			e.printStackTrace();
 		} catch (JSONException e) {
 			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
 		}
 		
 	}
@@ -376,7 +386,12 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		@Override
 		protected JSONObject doInBackground(String... urls) {
 			JSONParser jparser = new JSONParser();
-			JSONObject jObj = jparser.getJSONFromUrl(urls[0]);
+			JSONObject jObj = null;
+			try {
+				jObj = jparser.getJSONFromUrl(urls[0]);
+			} catch (JSONException e) {
+				Log.e("JSON Parser", "Error parsing data " + e.toString());
+			}
 			return jObj;
 		}
 		
@@ -393,7 +408,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			Boolean exito = false;
 			
-			String urlPostData = "http://moveapps.cl/json.php";
+			String urlPostData = "http://lavozdelservicio.cl/encuestas/formsumabox.php";
 			JSONParser jsonParser = new JSONParser();
 			try {
 				exito = jsonParser.postJsonFromUrl(json[0], urlPostData);
@@ -468,13 +483,13 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		
 		dbConnect = new DatabaseConnect(this);
 		
-		JSONObject jPost = new JSONObject();
-		JSONArray preguntasArray = new JSONArray();
-		JSONArray encuestadoArray = new JSONArray();
 		List<Encuestado> contactosArray = dbConnect.getEncuestados();
 		
 		if(contactosArray.size() > 0) {
 			for (int i = 0; i < contactosArray.size(); i++) {
+				JSONObject jPost = new JSONObject();
+				JSONArray preguntasArray = new JSONArray();
+				JSONArray encuestadoArray = new JSONArray();
 				Encuestado encuestado = contactosArray.get(i);
 				
 				JSONObject encuestadoObj = new JSONObject();
@@ -696,14 +711,16 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			}
 		}
 		
-		if(wifi.isConnected() || mobile.isConnected() && !error) {
+		if(wifi.isConnected() 
+				|| (mobile != null && mobile.isConnected()) 
+				&& !error) {
 			JsonPostObjectTask task = new JsonPostObjectTask();
 			task.execute(jPost);
 			
 			Toast mToast = Toast.makeText(this, "Formulario guardado correctamente.", Toast.LENGTH_SHORT);
 			mToast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,0, 0);
 			mToast.show();
-		} else if(!wifi.isConnected() && !mobile.isConnected()){
+		} else if(!wifi.isConnected() && (mobile != null && !mobile.isConnected())){
 			Toast mToast = Toast.makeText(this, "Sin conexion wifi", Toast.LENGTH_SHORT);
 			mToast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,0, 0);
 			mToast.show();

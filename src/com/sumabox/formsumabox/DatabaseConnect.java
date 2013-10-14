@@ -12,7 +12,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 public class DatabaseConnect extends SQLiteOpenHelper {
@@ -40,12 +39,18 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		super(context, DATABASE, null, DATABASE_VERSION);
 	}
 	
-	public boolean havingEncuesta() {
+	public boolean havingEncuesta(boolean sync) {
+		
+		if(sync) {
+			truncateTable(TABLE_ENCUESTAS);
+			truncateTable(TBL_PPREGUNTAS_ENCUESTAS);
+		}
+		
 		SQLiteDatabase queryDB = this.getReadableDatabase();
 		String query = "SELECT * FROM " + TABLE_ENCUESTAS;
 		Cursor cursor = queryDB.rawQuery(query, null);
 		
-		if(cursor == null || !cursor.moveToFirst()) {
+		if(cursor != null && cursor.getCount() == 0) {
 			queryDB.close();
 			return false;
 		}
@@ -56,17 +61,13 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 	public void truncateTable(String table) {
 		
 		SQLiteDatabase deleteQuery = this.getWritableDatabase();
-		String query = "DELETE FROM " + table;
-		deleteQuery.rawQuery(query, null);
+		deleteQuery.delete(table, null, null);
+		//String query = "DELETE FROM " + table;
+		//deleteQuery.rawQuery(query, null);
 		deleteQuery.close();
 	}
 	
-	public Encuesta saveEncuesta(JSONObject jsonObject, boolean sync) throws JSONException{
-		
-		if(sync) {
-			truncateTable(TABLE_ENCUESTAS);
-			truncateTable(TBL_PPREGUNTAS_ENCUESTAS);
-		}
+	public Encuesta saveEncuesta(JSONObject jsonObject) throws JSONException{
 		
 		Encuesta enc = new Encuesta();
 		
@@ -136,6 +137,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 				enc.setPreguntas(preguntasList);
 				
 				db.close();
+				cursor.close();
 			} else {
 				if(cursor.moveToFirst()) {
 					do {
@@ -145,7 +147,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 						enc.setPreguntas(getPreguntasEncuestasByEncuesta(cursor.getInt(0)));
 					} while (cursor.moveToNext());
 				}
-				queryDB.close();
+				cursor.close();
 			}
 		}
 		return enc;

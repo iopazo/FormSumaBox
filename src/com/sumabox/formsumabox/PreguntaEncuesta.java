@@ -1,6 +1,5 @@
 package com.sumabox.formsumabox;
 
-import java.util.List;
 
 public class PreguntaEncuesta {
 

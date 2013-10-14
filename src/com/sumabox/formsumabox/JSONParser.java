@@ -34,7 +34,7 @@ public class JSONParser {
 		
 	}
 	
-	public JSONObject getJSONFromUrl(String url){
+	public JSONObject getJSONFromUrl(String url) throws JSONException{
 		
 		try {
 			DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -52,6 +52,8 @@ public class JSONParser {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NetworkOnMainThreadException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
 			e.printStackTrace();
 		}
 		
@@ -82,7 +84,7 @@ public class JSONParser {
 
 		Boolean exito = false;
 		HttpClient httpClient = new DefaultHttpClient();
-		InputStream is = null;
+		//InputStream is = null;
 		
 		try {
 			HttpPost post = new HttpPost(url);
