@@ -101,11 +101,11 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			}
 		} else {
 			
-			if((wifi.isConnected() || mobile.isConnected()) && URLUtil.isValidUrl(url)) {
+			if((wifi.isConnected() || (mobile != null && mobile.isConnected())) && URLUtil.isValidUrl(url)) {
 				if(ll == null) {
 					loadActivity();
 				}
-			} else if(!wifi.isConnected() && !mobile.isConnected()){
+			} else if(!wifi.isConnected() && (mobile != null && mobile.isConnected())){
 				dialog("Debe estar conectado a Wifi para cargar el formulario.");
 			} else {
 				Intent intent = new Intent(this, SettingsActivity.class);
