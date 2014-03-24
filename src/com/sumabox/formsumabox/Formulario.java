@@ -2,7 +2,7 @@ package com.sumabox.formsumabox;
 
 import java.util.List;
 
-public class Encuestado {
+public class Formulario {
 	
 	String _mail;
 	String _nombre;
@@ -13,15 +13,15 @@ public class Encuestado {
 	List<Pregunta> _preguntas;
 	String _sucursal;
 	
-	public Encuestado() {
+	public Formulario() {
 	}
 	
-	public Encuestado(String mail, String nombre) {
+	public Formulario(String mail, String nombre) {
 		this._mail = mail;
 		this._nombre = nombre;
 	}
 	
-	public Encuestado(int id, String nombre, String mail, List<Pregunta> preguntas, int id_encuesta, String fecha, String sucursal) {
+	public Formulario(int id, String nombre, String mail, List<Pregunta> preguntas, int id_encuesta, String fecha, String sucursal) {
 		this._id = id;
 		this._mail = mail;
 		this._nombre = nombre;

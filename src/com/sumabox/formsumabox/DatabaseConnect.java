@@ -124,7 +124,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 								JSONObject textJson = opciones.getJSONObject(j);
 								options.add(textJson.getString("texto"));
 							}
-							String unidos = TextUtils.join(",", options);
+							String unidos = TextUtils.join("-", options);
 							prEncuesta.set_options(unidos);
 						}
 					}
@@ -196,7 +196,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 		db.close();
 	}
 	
-	public long addEncuestado(Encuestado encuestado) {
+	public long addEncuestado(Formulario encuestado) {
 		
 		SQLiteDatabase db = this.getWritableDatabase();
 		long lastInsertId = 0;
@@ -240,9 +240,9 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 	/*
 	 * Traemos toda la lista de encuestados sin asincronia.
 	 */
-	public List<Encuestado> getEncuestados() {
+	public List<Formulario> getEncuestados() {
 		
-		List<Encuestado> encuestadosArray = new ArrayList<Encuestado>();
+		List<Formulario> encuestadosArray = new ArrayList<Formulario>();
 		List<Pregunta> preguntas = new ArrayList<Pregunta>();
 		SQLiteDatabase db = this.getReadableDatabase();
 		String query = "SELECT id," + NOMBRE + ", " + MAIL + ", " + ID_ENCUESTA + ", " + FECHA + ", " + SUCURSAL + " "
@@ -253,7 +253,7 @@ public class DatabaseConnect extends SQLiteOpenHelper {
 			if(cursor.moveToFirst()) {
 				do {
 					preguntas = getPreguntasByEncuestado(cursor.getInt(0));
-					encuestadosArray.add(new Encuestado(cursor.getInt(0), cursor.getString(1), 
+					encuestadosArray.add(new Formulario(cursor.getInt(0), cursor.getString(1), 
 							cursor.getString(2), preguntas, cursor.getInt(3), cursor.getString(4), cursor.getString(5)));
 				} while (cursor.moveToNext());
 			}

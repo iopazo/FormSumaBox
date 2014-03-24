@@ -84,7 +84,6 @@ public class JSONParser {
 
 		Boolean exito = false;
 		HttpClient httpClient = new DefaultHttpClient();
-		//InputStream is = null;
 		
 		try {
 			HttpPost post = new HttpPost(url);

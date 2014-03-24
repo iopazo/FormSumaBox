@@ -32,6 +32,17 @@
         android:defaultValue="false"
         android:key="sync"
         android:title="@string/pref_sync" />
+    
+    <EditTextPreference
+        android:capitalize="words"
+        android:defaultValue="@string/pref_default_password"
+        android:inputType="textPassword"
+        android:key="id_password"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="false"
+        android:title="@string/pref_title_password" />
 
     <!--
          NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to

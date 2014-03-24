@@ -10,6 +10,8 @@
     <string name="pref_default_display_name">URL ENCUESTA/</string>
     <string name="pref_title_sucursal">Id Sucursal</string>
     <string name="pref_default_sucursal">0</string>
+    <string name="pref_title_password">Password Administrador</string>
+    <string name="pref_default_password">Ingrese password para generar cambios</string>
 
     <string-array name="pref_example_list_titles">
         <item>Always</item>

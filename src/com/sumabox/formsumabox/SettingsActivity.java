@@ -1,5 +1,6 @@
 package com.sumabox.formsumabox;
 
+import java.io.Console;
 import java.util.List;
 
 import android.annotation.TargetApi;
@@ -18,7 +19,10 @@ import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
 import android.support.v4.app.NavUtils;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -116,6 +120,7 @@ public class SettingsActivity extends PreferenceActivity {
 		// to reflect the new value, per the Android Design guidelines.
 		bindPreferenceSummaryToValue(findPreference("example_text"), false);
 		bindPreferenceSummaryToValue(findPreference("id_sucursal"), false);
+		bindPreferenceSummaryToValue(findPreference("id_password"), false);
 		bindPreferenceSummaryToValue(findPreference("sync"), true);
 		
 		//bindPreferenceSummaryToValue(findPreference("example_list"));
@@ -205,7 +210,27 @@ public class SettingsActivity extends PreferenceActivity {
 			} else {
 				// For all other preferences, set the summary to the value's
 				// simple string representation.
-				preference.setSummary(stringValue);
+				
+				boolean isPswdOk = true;
+				
+				String pwdValue = PreferenceManager.getDefaultSharedPreferences(
+						preference.getContext()).getString("id_password",
+						"");
+				
+				if(!pwdValue.equals("lavoz2014")) {
+					isPswdOk = false;
+				}
+				
+				if(!isPswdOk && !preference.getKey().toString().equals("id_password")) {
+					try {
+						preference.setSummary(PreferenceManager.getDefaultSharedPreferences(
+								preference.getContext()).getString(preference.getKey(),
+										""));
+					} catch (ClassCastException e) {}
+					return false;
+				} else if(!preference.getKey().toString().equals("id_password")){
+					preference.setSummary(stringValue);
+				}
 			}
 			return true;
 		}
@@ -234,6 +259,7 @@ public class SettingsActivity extends PreferenceActivity {
 							preference.getContext()).getBoolean(preference.getKey(),
 							false));
 		} else {
+			
 			sBindPreferenceSummaryToValueListener.onPreferenceChange(
 					preference,
 					PreferenceManager.getDefaultSharedPreferences(
@@ -260,6 +286,7 @@ public class SettingsActivity extends PreferenceActivity {
 			// guidelines.
 			bindPreferenceSummaryToValue(findPreference("example_text"), false);
 			bindPreferenceSummaryToValue(findPreference("id_sucursal"), false);
+			bindPreferenceSummaryToValue(findPreference("id_password"), false);
 			bindPreferenceSummaryToValue(findPreference("sync"), true);
 			//bindPreferenceSummaryToValue(findPreference("example_list"));
 		}

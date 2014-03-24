@@ -24,6 +24,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -105,7 +106,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				if(ll == null) {
 					loadActivity();
 				}
-			} else if(!wifi.isConnected() && (mobile != null && mobile.isConnected())){
+			} else if(!wifi.isConnected() && (mobile != null && !mobile.isConnected())){
 				dialog("Debe estar conectado a Wifi para cargar el formulario.");
 			} else {
 				Intent intent = new Intent(this, SettingsActivity.class);
@@ -205,9 +206,10 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			if(!url_logo_encuesta.equals("")) {
 				
 				imageView = new ImageView(this);
-				LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 
+				LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 
 						LinearLayout.LayoutParams.WRAP_CONTENT);
 				imageView.setLayoutParams(imgParams);
+				imageView.setAdjustViewBounds(true);
 				
 				GetPngImageTask imageTask = new GetPngImageTask();
 				imageTask.execute(url_logo_encuesta);
@@ -218,7 +220,6 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			for(row = 0; row < numeroPreguntas; row++) {
 				
 				PreguntaEncuesta c = preguntas.get(row);
-				//JSONObject c = preguntas.getJSONObject(row);
 				
 				Integer id = c.get_id_pregunta();
 				tipo = c.get_tipo();
@@ -233,7 +234,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 						radioButton = new RadioButton[total];
 						zero = c.is_zero();
 					} else {
-						opciones = TextUtils.split(c.get_options(), ",");
+						opciones = TextUtils.split(c.get_options(), "-");
 						radioButton = new RadioButton[opciones.length];
 					}
 				}
@@ -244,18 +245,23 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					
 					LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 					
+					
 					labels[row] = new TextView(this);
 					labels[row].setText(label);
 					labelParams.setMargins(50, 10, 50, 0);
-					labels[row].setTextSize(22);
+					labels[row].setTextSize(30);
+					labels[row].setBackgroundColor(Color.WHITE);
+					labels[row].setPadding(10, 20, 10, 20);
 					labels[row].setLayoutParams(labelParams);
 					linearLayout.addView(labels[row]);
 					
 					LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-					inputParams.setMargins(50, 20, 50, 0);
+					inputParams.setMargins(50, 0, 50, 0);
 					editText[row] = new EditText(this);
 					editText[row].setHint("Inserte su respuesta aqui...");
 					editText[row].setId(id);
+					editText[row].setBackgroundColor(Color.WHITE);
+					labels[row].setPadding(10, 20, 10, 20);
 					editText[row].setLayoutParams(inputParams);
 					linearLayout.addView(editText[row]);
 					
@@ -265,46 +271,80 @@ public class FormMainActivity extends Activity implements OnClickListener {
 					
 					labels[row] = new TextView(this);
 					labels[row].setText(label);
+					labels[row].setBackgroundColor(Color.WHITE);
+					labels[row].setPadding(10, 20, 10, 20);
 					labelRadioParams.setMargins(50, 10, 50, 0);
-					labels[row].setTextSize(22);
+					labels[row].setTextSize(30);
 					labels[row].setLayoutParams(labelRadioParams);
 					linearLayout.addView(labels[row]);
 					
-					LinearLayout.LayoutParams leftLabelRadioParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+					//LinearLayout.LayoutParams leftLabelRadioParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 					
-					if(escala && !before_label.equals("") && !after_label.equals("")) {
+					/*if(escala && !before_label.equals("") && !after_label.equals("")) {
 						//Before Label
 						labels[row] = new TextView(this);
-						labels[row].setText("Debe seleccionar entre " + before_label + " y " + after_label + ".");
+						labels[row].setText("Debe seleccionar entre " + after_label + " y " + before_label + ".");
 						labels[row].setTextSize(18);
 						labels[row].setTextColor(Color.GRAY);
 						leftLabelRadioParams.setMargins(50, 15, 50, 0);
 						labels[row].setLayoutParams(leftLabelRadioParams);
 						linearLayout.addView(labels[row]);
-					}
+					}*/
 					
-					LinearLayout.LayoutParams radioGParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-					radioGParams.setMargins(50, 20, 0, 0);
+					LinearLayout.LayoutParams radioGParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+					
+					radioGParams.setMargins(0, 20, 0, 0);
 					RadioGroup radioGroup = new RadioGroup(this);
 					
 					if(orientation.equals("horizontal")) {
-						radioGroup.setGravity(Gravity.CENTER_HORIZONTAL);
+						radioGParams.setMargins(50, 0, 50, 0);
+						radioGroup.setGravity(Gravity.CENTER);
 						radioGroup.setOrientation(RadioGroup.HORIZONTAL);
+						radioGroup.setPadding(0, 20, 0, 20);
+					} else {
+						radioGParams.setMargins(50, 0, 50, 0);
 					}
 					
 					radioGroup.setLayoutParams(radioGParams);
 					radioGroup.setId(id);
+					radioGroup.setBackgroundColor(Color.WHITE);
+					
+					radioGroup.setPadding(0, 20, 0, 20);
 					linearLayout.addView(radioGroup);
 					
 					if(escala) {
+						
 						for (int r = ((!zero) ? 0 : 1); r < total; r++) {
+							
 							radioButton[r] = new RadioButton(this);
-							radioButton[r].setText("" + r);
+							
+
+							if(r == ((!zero) ? 0 : 1)) {
+								Drawable imgNo = this.getResources().getDrawable(R.drawable.no);
+								radioButton[r+1] = new RadioButton(this);
+								radioButton[r+1].setButtonDrawable(imgNo);
+								radioButton[r+1].setPadding(55, 0, 0, 0);
+								radioGroup.addView(radioButton[r+1]);
+								
+								radioButton[r].setText("" + r);
+								radioButton[r].setTextSize(30);
+								
+							} else {
+								radioButton[r].setText("" + r);
+								radioButton[r].setTextSize(30);
+							}
 							radioGroup.addView(radioButton[r]);
+							
+							if(r == total - 1) {
+								Drawable imgYes = this.getResources().getDrawable(R.drawable.yes);
+								radioButton[r].setCompoundDrawablesWithIntrinsicBounds(null, null, imgYes, null);
+								radioButton[r].setCompoundDrawablePadding(10);
+							}
 						}
 					} else {
 						for (int r = 0; r < opciones.length ; r++) {
 							radioButton[r] = new RadioButton(this);
+							radioButton[r].setTextSize(25);
 							radioButton[r].setText(opciones[r]);
 							radioGroup.addView(radioButton[r]);
 						}
@@ -314,23 +354,31 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			LinearLayout.LayoutParams usuariosInputParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
 					LinearLayout.LayoutParams.WRAP_CONTENT);
-			usuariosInputParam.setMargins(50, 10, 50, 0);
+			usuariosInputParam.setMargins(50, 10, 50, 10);
 			
 			TextView nombreLabel = new TextView(this);
-			nombreLabel.setTextSize(22);
+			nombreLabel.setTextSize(30);
+			nombreLabel.setBackgroundColor(Color.WHITE);
+			nombreLabel.setPadding(10, 20, 10, 20);
 			nombreLabel.setText(getResources().getString(R.string.encuestado_label));
 			EditText nombre = new EditText(this);
 			nombre.setTag("nombre");
 			nombre.setHint("Ingrese su nombre aqui");
+			nombre.setBackgroundColor(Color.WHITE);
+			nombre.setPadding(10, 20, 10, 20);
 			nombre.setLayoutParams(usuariosInputParam);
 			nombreLabel.setLayoutParams(usuariosInputParam);
 			
 			TextView emailLabel = new TextView(this);
-			emailLabel.setTextSize(22);
+			emailLabel.setTextSize(30);
+			emailLabel.setBackgroundColor(Color.WHITE);
+			emailLabel.setPadding(10, 20, 10, 20);
 			emailLabel.setText(getResources().getString(R.string.mail_label));
 			EditText email = new EditText(this);
 			email.setTag("email");
 			email.setHint("Ingrese su email");
+			email.setBackgroundColor(Color.WHITE);
+			email.setPadding(10, 20, 10, 20);
 			email.setLayoutParams(usuariosInputParam);
 			emailLabel.setLayoutParams(usuariosInputParam);
 			
@@ -343,7 +391,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			 * Boton Guardar
 			 */
 			Button button = new Button(this);
-			button.setText("Guardar Formulario");
+			button.setText("Enviar Encuesta");
 			LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
 					LinearLayout.LayoutParams.WRAP_CONTENT);
 			buttonParams.setMargins(50, 40, 50, 0);
@@ -358,7 +406,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			//Params para el scroll View.
 			LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
 			scrollView.setLayoutParams(scrollParams);
-			scrollView.setBackgroundColor(Color.parseColor("#e9e9e9"));
+			scrollView.setBackgroundColor(Color.parseColor("#c6c6c6"));
 			setContentView(scrollView);
 			
 		} catch (InterruptedException e) {
@@ -443,7 +491,12 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			try {
 				is = getHttpConnection(url);
 				map = BitmapFactory.decodeStream(is, null, options);
-				is.close();
+				try {
+					is.close();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -483,14 +536,14 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		
 		dbConnect = new DatabaseConnect(this);
 		
-		List<Encuestado> contactosArray = dbConnect.getEncuestados();
+		List<Formulario> contactosArray = dbConnect.getEncuestados();
 		
 		if(contactosArray.size() > 0) {
 			for (int i = 0; i < contactosArray.size(); i++) {
 				JSONObject jPost = new JSONObject();
 				JSONArray preguntasArray = new JSONArray();
 				JSONArray encuestadoArray = new JSONArray();
-				Encuestado encuestado = contactosArray.get(i);
+				Formulario encuestado = contactosArray.get(i);
 				
 				JSONObject encuestadoObj = new JSONObject();
 				
@@ -571,12 +624,12 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			
 			if(texto.getText().toString().length() == 0) {
 				if(texto.getTag().equals("nombre")) {
-					error = true;
-					texto.setError("Debe ingresar su nombre");
+					//error = true;
+					//texto.setError("Debe ingresar su nombre");
 				}
 				if(texto.getTag().equals("email")) {
-					error = true;
-					texto.setError("Debe ingresar su email");
+					//error = true;
+					//texto.setError("Debe ingresar su email");
 				}
 			} else if(texto.getTag().equals("email") && !validateEmail(texto.getText().toString())){
 				error = true;
@@ -584,12 +637,13 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			}
 		}
 		
-		
+		/*
 		//Recorremos el arrayList para buscar errores.
 		for(int e = 0; e < editTextList.size(); e++) {
 			
 			EditText texto = (EditText) findViewById(editTextList.get(e).getId());
 			String respuesta = texto.getText().toString();
+			
 			if(respuesta.length() == 0) {
 				error = true;
 				texto.setError("Debe ingresar su respuesta aqui");
@@ -599,6 +653,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 		/*
 		 * Recorremos los radioGroup
 		 */
+		/*
 		for(int rg = 0; rg < radioGroupList.size(); rg++) {
 			Boolean radioChecked = false;
 			RadioGroup radioButtonGroup = (RadioGroup) findViewById(radioGroupList.get(rg).getId());
@@ -617,12 +672,12 @@ public class FormMainActivity extends Activity implements OnClickListener {
 				radioButton.setError("Debe seleccionar una opcion");
 				error = true;
 			}
-		}
+		}*/
 		
 		//No hay errores asi que se continua
 		if(!error) {
 			dbConnect = new DatabaseConnect(this);
-			Encuestado encuestadoObj = new Encuestado();
+			Formulario encuestadoObj = new Formulario();
 			
 			for (int u = 0; u < userTextList.size(); u++) {
 				EditText texto = (EditText) userTextList.get(u);
@@ -690,6 +745,7 @@ public class FormMainActivity extends Activity implements OnClickListener {
 						} catch (JSONException e2) {
 							e2.printStackTrace();
 						}
+						//Lipia campos
 						radioButtonGroup.clearCheck();
 					}
 				}
@@ -709,11 +765,14 @@ public class FormMainActivity extends Activity implements OnClickListener {
 			} catch (JSONException e2) {
 				e2.printStackTrace();
 			}
+		} else {
+			Toast mToast = Toast.makeText(this, "Debe completar los datos marcados", Toast.LENGTH_SHORT);
+			mToast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL,0, 0);
+			mToast.show();
 		}
 		
-		if(wifi.isConnected() 
-				|| (mobile != null && mobile.isConnected()) 
-				&& !error) {
+		if(!error && wifi.isConnected() 
+				|| (mobile != null && mobile.isConnected())) {
 			JsonPostObjectTask task = new JsonPostObjectTask();
 			task.execute(jPost);
 			
